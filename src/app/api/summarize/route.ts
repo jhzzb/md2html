@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { fetchArticle } from "@/lib/article";
 import { generateSummaries } from "@/lib/openai";
 import { getSessionId } from "@/lib/session";
@@ -14,17 +14,17 @@ export async function POST(request: NextRequest) {
     }
 
     const article = await fetchArticle(url);
-    const summaries = await generateSummaries(article.content);
+    const { oneSentence, shortSummary, detailedSummary } = await generateSummaries(article.content);
     const sessionId = await getSessionId();
 
     const result = await insertSummary({
       url,
       title: article.title,
       content: article.content,
-      excerpt: article.excerpt,
-      siteName: article.siteName,
+      oneLine: oneSentence,
+      shortSummary,
+      detailedSummary,
       sessionId,
-      ...summaries,
     });
 
     return NextResponse.json(result);

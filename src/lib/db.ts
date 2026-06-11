@@ -1,123 +1,32 @@
-﻿import { db } from "@/db";
-import { articles, summaries } from "@/db/schema";
-import { eq, desc, count } from "drizzle-orm";
+﻿import { eq, count, desc } from "drizzle-orm";
+import { db } from "@/db";
+import { summaries } from "@/db/schema";
+import type { InsertSummary, Summary } from "@/types";
 
-export async function insertSummary(params: {
-  url: string;
-  title: string;
-  content: string;
-  excerpt: string | null;
-  siteName: string | null;
-  sessionId: string;
-  oneSentence: string;
-  shortSummary: string;
-  detailedSummary: string;
-}) {
-  // Upsert article: find existing or create new
-  const existing = await db
-    .select({ id: articles.id })
-    .from(articles)
-    .where(eq(articles.url, params.url))
-    .limit(1);
-
-  let articleId: string;
-
-  if (existing.length > 0) {
-    articleId = existing[0].id;
-  } else {
-    const inserted = await db
-      .insert(articles)
-      .values({
-        id: crypto.randomUUID(),
-        url: params.url,
-        title: params.title,
-        content: params.content,
-        excerpt: params.excerpt,
-        author: null,
-        siteName: params.siteName,
-        createdAt: Date.now(),
-      })
-      .returning();
-    articleId = inserted[0].id;
-  }
-
-  const summary = await db
-    .insert(summaries)
-    .values({
-      id: crypto.randomUUID(),
-      articleId,
-      sessionId: params.sessionId,
-      oneSentence: params.oneSentence,
-      shortSummary: params.shortSummary,
-      detailedSummary: params.detailedSummary,
-      createdAt: Date.now(),
-    })
-    .returning();
-
-  return summary[0];
+export async function insertSummary(data: InsertSummary): Promise<Summary> {
+  const [result] = await db.insert(summaries).values(data).returning();
+  return result;
 }
 
-export async function getSummaries(params: {
-  page: number;
-  limit: number;
-  sessionId?: string;
-}) {
-  const { page, limit, sessionId } = params;
+export async function getSummaries(page: number, limit: number): Promise<{ data: Summary[]; total: number }> {
   const offset = (page - 1) * limit;
-
-  const conditions = sessionId ? eq(summaries.sessionId, sessionId) : undefined;
-
-  const totalResult = await db
-    .select({ count: count() })
-    .from(summaries)
-    .where(conditions);
-
-  const total = totalResult[0].count;
-
-  const data = await db
-    .select({
-      id: summaries.id,
-      articleId: summaries.articleId,
-      sessionId: summaries.sessionId,
-      oneSentence: summaries.oneSentence,
-      shortSummary: summaries.shortSummary,
-      detailedSummary: summaries.detailedSummary,
-      createdAt: summaries.createdAt,
-      articleTitle: articles.title,
-      articleUrl: articles.url,
-      articleExcerpt: articles.excerpt,
-      siteName: articles.siteName,
-    })
-    .from(summaries)
-    .leftJoin(articles, eq(summaries.articleId, articles.id))
-    .where(conditions)
-    .orderBy(desc(summaries.createdAt))
-    .limit(limit)
-    .offset(offset);
-
-  return { data, total, page };
+  const [data, totalResult] = await Promise.all([
+    db.select()
+      .from(summaries)
+      .orderBy(desc(summaries.createdAt))
+      .limit(limit)
+      .offset(offset),
+    db.select({ value: count() }).from(summaries),
+  ]);
+  return { data, total: totalResult[0].value };
 }
 
-export async function getSummaryById(id: string) {
-  const result = await db
-    .select({
-      id: summaries.id,
-      articleId: summaries.articleId,
-      sessionId: summaries.sessionId,
-      oneSentence: summaries.oneSentence,
-      shortSummary: summaries.shortSummary,
-      detailedSummary: summaries.detailedSummary,
-      createdAt: summaries.createdAt,
-      articleTitle: articles.title,
-      articleUrl: articles.url,
-      articleExcerpt: articles.excerpt,
-      articleContent: articles.content,
-      siteName: articles.siteName,
-    })
-    .from(summaries)
-    .leftJoin(articles, eq(summaries.articleId, articles.id))
-    .where(eq(summaries.id, id))
-    .limit(1);
+export async function getSummaryById(id: string): Promise<Summary | null> {
+  const [result] = await db.select().from(summaries).where(eq(summaries.id, id)).limit(1);
+  return result ?? null;
+}
 
-  return result[0] || null;
+export async function deleteSummary(id: string): Promise<boolean> {
+  const result = await db.delete(summaries).where(eq(summaries.id, id)).returning({ id: summaries.id });
+  return result.length > 0;
 }
