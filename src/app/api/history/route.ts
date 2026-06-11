@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { getSummaries } from "@/lib/db";
+import { getSessionId } from "@/lib/session";
 
 export async function GET(request: NextRequest) {
   try {
@@ -7,7 +8,8 @@ export async function GET(request: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
     const limit = Math.max(1, Math.min(100, parseInt(searchParams.get("limit") || "20", 10)));
 
-    const result = await getSummaries(page, limit);
+    const sessionId = await getSessionId();
+    const result = await getSummaries(page, limit, sessionId);
 
     return NextResponse.json(result);
   } catch (error) {

@@ -20,7 +20,7 @@ export const summaries = sqliteTable("summaries", {
   url: text("url").notNull(),
   title: text("title").notNull(),
   content: text("content").notNull(),
-  oneLine: text("one_line").notNull(),
+  oneSentence: text("one_sentence").notNull(),
   shortSummary: text("short_summary").notNull(),
   detailedSummary: text("detailed_summary").notNull(),
   sessionId: text("session_id").notNull(),

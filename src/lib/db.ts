@@ -8,15 +8,18 @@ export async function insertSummary(data: InsertSummary): Promise<Summary> {
   return result;
 }
 
-export async function getSummaries(page: number, limit: number): Promise<{ data: Summary[]; total: number }> {
+export async function getSummaries(page: number, limit: number, sessionId?: string): Promise<{ data: Summary[]; total: number }> {
   const offset = (page - 1) * limit;
+  const conditions = sessionId ? eq(summaries.sessionId, sessionId) : undefined;
+
   const [data, totalResult] = await Promise.all([
     db.select()
       .from(summaries)
+      .where(conditions)
       .orderBy(desc(summaries.createdAt))
       .limit(limit)
       .offset(offset),
-    db.select({ value: count() }).from(summaries),
+    db.select({ value: count() }).from(summaries).where(conditions),
   ]);
   return { data, total: totalResult[0].value };
 }

@@ -30,11 +30,16 @@ export async function generateSummaries(content: string): Promise<{
     throw new Error("OpenAI returned empty response");
   }
 
-  const parsed = JSON.parse(text) as {
-    oneSentence: string;
-    shortSummary: string;
-    detailedSummary: string;
-  };
+  let parsed: { oneSentence: string; shortSummary: string; detailedSummary: string };
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new Error("Failed to parse OpenAI response as JSON");
+  }
+
+  if (!parsed.oneSentence || !parsed.shortSummary || !parsed.detailedSummary) {
+    throw new Error("OpenAI response missing required summary fields");
+  }
 
   return {
     oneSentence: parsed.oneSentence,

@@ -5,7 +5,6 @@ import Link from "next/link";
 import UrlInput from "./components/url-input";
 import SummaryCard from "./components/summary-card";
 import SummarySkeleton from "./components/summary-skeleton";
-import { mockSummarize } from "./lib/mock";
 import type { SummaryResult } from "./lib/mock";
 
 export default function HomePage() {
@@ -18,10 +17,19 @@ export default function HomePage() {
     setError(null);
     setResult(null);
     try {
-      const data = await mockSummarize(url);
+      const res = await fetch("/api/summarize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to generate summary");
+      }
+      const data = await res.json();
       setResult(data);
-    } catch {
-      setError("Failed to generate summary. Please check the URL and try again.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to generate summary");
     } finally {
       setIsLoading(false);
     }

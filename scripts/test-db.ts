@@ -1,4 +1,4 @@
-import { db } from "../src/db";
+﻿import { db } from "../src/db";
 import { summaries } from "../src/db/schema";
 import { eq } from "drizzle-orm";
 
@@ -12,7 +12,7 @@ async function main() {
     url: "https://example.com/test",
     title: "Test Article",
     content: "This is the full article content for testing purposes.",
-    oneLine: "This is a one-line summary.",
+    oneSentence: "This is a one-line summary.",
     shortSummary: "This is a short summary for testing.",
     detailedSummary: "This is a detailed summary with more information for testing purposes.",
     sessionId: "test-session-123",
@@ -23,7 +23,7 @@ async function main() {
   console.log("\n2. Querying all summaries...");
   const all = await db.select().from(summaries).orderBy(summaries.createdAt);
   console.log(`   Found ${all.length} record(s):`);
-  all.forEach((s) => console.log(`   - ${s.id.slice(0, 8)}... | ${s.title} | ${s.oneLine}`));
+  all.forEach((s) => console.log(`   - ${s.id.slice(0, 8)}... | ${s.title} | ${s.oneSentence}`));
 
   // 3. Query by ID
   console.log("\n3. Querying by ID...");

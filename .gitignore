@@ -13,3 +13,6 @@ drizzle/
 # misc
 *.tsbuildinfo
 next-env.d.ts
+
+# local sqlite
+data/*.db

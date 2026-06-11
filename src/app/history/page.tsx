@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import HistoryList from "../components/history-list";
-import { mockGetHistory, mockGetHistoryById, type SummaryResult, type HistoryItem } from "../lib/mock";
+import type { SummaryResult, HistoryItem } from "../lib/mock";
 
 export default function HistoryPage() {
   const [items, setItems] = useState<HistoryItem[]>([]);
@@ -17,10 +17,21 @@ export default function HistoryPage() {
   const loadHistory = useCallback(async (p: number) => {
     setIsLoading(true);
     try {
-      const data = await mockGetHistory(p);
-      setItems((prev) => (p === 1 ? data.items : [...prev, ...data.items]));
+      const res = await fetch(`/api/history?page=${p}&limit=20`);
+      if (!res.ok) throw new Error("Failed to fetch history");
+      const data = await res.json();
+      const mapped = (data.data || []).map((s: SummaryResult) => ({
+        id: s.id,
+        url: s.url,
+        title: s.title,
+        oneSentence: s.oneSentence,
+        createdAt: s.createdAt,
+      }));
+      setItems((prev) => (p === 1 ? mapped : [...prev, ...mapped]));
       setTotal(data.total);
       setPage(p);
+    } catch (e) {
+      console.error("Failed to load history:", e);
     } finally {
       setIsLoading(false);
     }
@@ -35,8 +46,14 @@ export default function HistoryPage() {
       setSelectedDetail(null);
       return;
     }
-    const detail = await mockGetHistoryById(id);
-    setSelectedDetail(detail);
+    try {
+      const res = await fetch(`/api/history/${id}`);
+      if (!res.ok) throw new Error("Not found");
+      const detail = await res.json();
+      setSelectedDetail(detail);
+    } catch {
+      setSelectedDetail(null);
+    }
   }, [selectedDetail]);
 
   // Client-side search filter

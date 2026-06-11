@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { fetchArticle } from "@/lib/article";
 import { generateSummaries } from "@/lib/openai";
 import { getSessionId } from "@/lib/session";
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       url,
       title: article.title,
       content: article.content,
-      oneLine: oneSentence,
+      oneSentence,
       shortSummary,
       detailedSummary,
       sessionId,
