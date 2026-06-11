@@ -2,6 +2,7 @@
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
+  baseURL: "http://127.0.0.1:15721/v1",
 });
 
 export async function generateSummaries(content: string): Promise<{
@@ -10,7 +11,7 @@ export async function generateSummaries(content: string): Promise<{
   detailedSummary: string;
 }> {
   const response = await client.chat.completions.create({
-    model: "gpt-4o",
+    model: "deepseek-v4-flash",
     messages: [
       {
         role: "system",
